@@ -1,521 +1,571 @@
-// Sidebar — to be implemented during dashboard integration phase
-// const Sidebar = () => null;
-// export default Sidebar;
 import { useState } from "react";
 
-// ─── Nav Item Definition ──────────────────────────────────────────────────────
-// Each item carries: icon (JSX), label, href, badge (optional), roles (array)
-// roles: which roles can see this item. Empty array = visible to ALL roles.
+// ── Role-based nav config ──────────────────────────────────────────────────
+// Add more items per role when ready — just extend the array.
+const NAV_CONFIG = {
+  ADMIN: [
+    { icon: "bi-speedometer2", label: "Dashboard", href: "/admin/dashboard" },
+    { icon: "bi-people-fill",  label: "Users",     href: "/admin/users" },
+  ],
+  PROJECT_MANAGER: [
+    { icon: "bi-speedometer2",  label: "Dashboard", href: "/pm/dashboard" },
+    { icon: "bi-kanban-fill",   label: "Projects",  href: "/pm/projects" },
+  ],
+  SITE_ENGINEER: [
+    { icon: "bi-speedometer2",    label: "Dashboard",   href: "/engineer/dashboard" },
+    { icon: "bi-clipboard-data",  label: "Site Logs",   href: "/engineer/logs" },
+  ],
+  SAFETY_OFFICER: [
+    { icon: "bi-speedometer2",         label: "Dashboard", href: "/safety/dashboard" },
+    { icon: "bi-shield-exclamation",   label: "Incidents", href: "/safety/incidents" },
+  ],
+  VENDOR: [
+    { icon: "bi-speedometer2", label: "Dashboard", href: "/vendor/dashboard" },
+    { icon: "bi-receipt",      label: "Orders",    href: "/vendor/orders" },
+  ],
+  FINANCE_OFFICER: [
+    { icon: "bi-speedometer2",      label: "Dashboard", href: "/finance/dashboard" },
+    { icon: "bi-cash-coin",         label: "Budget",    href: "/finance/budget" },
+  ],
+};
 
-const NAV_ITEMS = [
-  {
-    key: "dashboard",
-    label: "Dashboard",
-    href: "/dashboard",
-    roles: [], // visible to everyone
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-      </svg>
-    ),
-  },
-  {
-    key: "projects",
-    label: "Projects",
-    href: "/projects",
-    roles: ["admin", "project_manager", "site", "safety"],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <line x1="3" y1="6" x2="21" y2="6" />
-        <line x1="3" y1="12" x2="15" y2="12" />
-        <line x1="3" y1="18" x2="18" y2="18" />
-      </svg>
-    ),
-  },
-  {
-    key: "messages",
-    label: "Messages",
-    href: "/messages",
-    badge: 8,
-    roles: [],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-  },
-  {
-    key: "services",
-    label: "Services",
-    href: "/services",
-    roles: ["admin", "vendor"],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <rect x="2" y="7" width="20" height="14" rx="2" />
-        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-      </svg>
-    ),
-  },
-  {
-    key: "finance",
-    label: "Finance",
-    href: "/finance",
-    roles: ["admin", "finance"],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-      </svg>
-    ),
-  },
-  {
-    key: "customers",
-    label: "Customers",
-    href: "/customers",
-    roles: ["admin", "project_manager"],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
-  {
-    key: "vendors",
-    label: "Vendors",
-    href: "/vendors",
-    roles: ["admin", "vendor"],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-  },
-  {
-    key: "safety",
-    label: "Safety",
-    href: "/safety",
-    roles: ["admin", "safety", "site"],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
-  },
-  {
-    key: "notifications",
-    label: "Notifications",
-    href: "/notifications",
-    roles: [],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-      </svg>
-    ),
-  },
-  {
-    key: "settings",
-    label: "Settings",
-    href: "/settings",
-    roles: ["admin"],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-      </svg>
-    ),
-  },
-];
+const ROLE_BADGE = {
+  ADMIN:           { label: "Admin",           color: "#e74c3c" },
+  PROJECT_MANAGER: { label: "Project Manager", color: "#f39c12" },
+  SITE_ENGINEER:   { label: "Site Engineer",   color: "#3498db" },
+  SAFETY_OFFICER:  { label: "Safety Officer",  color: "#e67e22" },
+  VENDOR:          { label: "Vendor",          color: "#2ecc71" },
+  FINANCE_OFFICER: { label: "Finance Officer", color: "#9b59b6" },
+};
 
-const BOTTOM_ITEMS = [
-  {
-    key: "account",
-    label: "Account",
-    href: "/account",
-    roles: [],
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
-  },
-  {
-    key: "logout",
-    label: "Logout",
-    href: "/logout",
-    roles: [],
-    danger: true,
-    icon: (
-      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16 17 21 12 16 7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
-      </svg>
-    ),
-  },
-];
+// ── Sidebar Component ──────────────────────────────────────────────────────
+export default function Sidebar({
+  role = "ADMIN",
+  user = { name: "Alex Johnson", email: "alex@buildsmart.com", avatar: null },
+  activePath = "",
+  onSignOut = () => {},
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-// ─── Logo ─────────────────────────────────────────────────────────────────────
-const AgencyLogo = ({ collapsed }) => (
-  <div className="d-flex align-items-center gap-2 px-2 mb-4 mt-1">
-    <div
-      style={{
-        width: 42,
-        height: 42,
-        background: "#000",
-        borderRadius: "50%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-      }}
-    >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2">
-        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-        <path d="M2 17l10 5 10-5" />
-        <path d="M2 12l10 5 10-5" />
-      </svg>
-    </div>
-    {!collapsed && (
-      <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: "#000", fontFamily: "'DM Sans', sans-serif" }}>
-        AGENCY
-      </span>
-    )}
-  </div>
-);
+  const navItems = NAV_CONFIG[role] || NAV_CONFIG.ADMIN;
+  const badge    = ROLE_BADGE[role]  || ROLE_BADGE.ADMIN;
+  const initials = user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
-// ─── Nav Link Item ─────────────────────────────────────────────────────────────
-const NavItem = ({ icon, label, href, badge, collapsed, active, danger }) => (
-  <a
-    href={href}
-    className="d-flex align-items-center gap-3 text-decoration-none position-relative"
-    style={{
-      padding: collapsed ? "10px 0" : "10px 12px",
-      borderRadius: 10,
-      color: danger ? "#dc3545" : active ? "#000" : "#6c757d",
-      background: active ? "#f0f0f0" : "transparent",
-      fontWeight: active ? 600 : 400,
-      fontSize: 14.5,
-      transition: "all 0.18s ease",
-      justifyContent: collapsed ? "center" : "flex-start",
-      fontFamily: "'DM Sans', sans-serif",
-    }}
-    onMouseEnter={(e) => {
-      if (!active) e.currentTarget.style.background = "#f8f8f8";
-      if (!active) e.currentTarget.style.color = danger ? "#dc3545" : "#000";
-    }}
-    onMouseLeave={(e) => {
-      if (!active) e.currentTarget.style.background = "transparent";
-      if (!active) e.currentTarget.style.color = danger ? "#dc3545" : "#6c757d";
-    }}
-    title={collapsed ? label : ""}
-  >
-    <span style={{ flexShrink: 0, display: "flex" }}>{icon}</span>
-    {!collapsed && <span>{label}</span>}
-    {!collapsed && badge ? (
-      <span
-        className="ms-auto badge rounded-pill"
-        style={{ background: "#000", color: "#fff", fontSize: 11, minWidth: 22 }}
-      >
-        {badge}
-      </span>
-    ) : null}
-    {collapsed && badge ? (
-      <span
-        style={{
-          position: "absolute",
-          top: 4,
-          right: 4,
-          width: 8,
-          height: 8,
-          background: "#dc3545",
-          borderRadius: "50%",
-        }}
-      />
-    ) : null}
-  </a>
-);
-
-// ─── Sidebar Component ─────────────────────────────────────────────────────────
-/**
- * Props:
- *   role        — "admin" | "project_manager" | "finance" | "vendor" | "site" | "safety"
- *   activeKey   — key of currently active nav item
- *   navItems    — optional override; defaults to NAV_ITEMS above
- *   bottomItems — optional override; defaults to BOTTOM_ITEMS above
- */
-const Sidebar = ({
-  role = "admin",
-  activeKey = "dashboard",
-  navItems = NAV_ITEMS,
-  bottomItems = BOTTOM_ITEMS,
-}) => {
-  const [collapsed, setCollapsed] = useState(false);   // desktop collapse
-  const [mobileOpen, setMobileOpen] = useState(false); // mobile drawer
-
-  // Filter items by role
-  const filterByRole = (items) =>
-    items.filter((item) => item.roles.length === 0 || item.roles.includes(role));
-
-  const visibleNav = filterByRole(navItems);
-  const visibleBottom = filterByRole(bottomItems);
-
-  const sidebarWidth = collapsed ? 72 : 240;
-
-  const sidebarContent = (isMobile = false) => (
-    <div
-      className="d-flex flex-column h-100 py-3 px-2"
-      style={{ gap: 2 }}
-    >
-      {/* Header: Logo + Toggle */}
-      <div className="d-flex align-items-center justify-content-between mb-2 px-1">
-        <AgencyLogo collapsed={!isMobile && collapsed} />
-        {isMobile ? (
-          <button
-            className="btn btn-sm btn-light ms-auto"
-            onClick={() => setMobileOpen(false)}
-            style={{ borderRadius: 8, border: "1px solid #e0e0e0" }}
-            aria-label="Close sidebar"
-          >
-            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        ) : (
-          <button
-            className="btn btn-sm btn-light"
-            onClick={() => setCollapsed(!collapsed)}
-            style={{ borderRadius: 8, border: "1px solid #e0e0e0", flexShrink: 0 }}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            ) : (
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            )}
-          </button>
-        )}
-      </div>
-
-      {/* Role badge */}
-      {(!collapsed || isMobile) && (
-        <div className="px-2 mb-3">
-          <span
-            style={{
-              display: "inline-block",
-              background: "#f0f0f0",
-              color: "#555",
-              fontSize: 11,
-              fontWeight: 600,
-              padding: "3px 10px",
-              borderRadius: 20,
-              textTransform: "uppercase",
-              letterSpacing: 1,
-              fontFamily: "'DM Sans', sans-serif",
-            }}
-          >
-            {role.replace("_", " ")}
-          </span>
-        </div>
-      )}
-
-      {/* Main Nav */}
-      <nav className="d-flex flex-column flex-grow-1" style={{ gap: 2 }}>
-        {visibleNav.map((item) => (
-          <NavItem
-            key={item.key}
-            icon={item.icon}
-            label={item.label}
-            href={item.href}
-            badge={item.badge}
-            collapsed={!isMobile && collapsed}
-            active={item.key === activeKey}
-          />
-        ))}
-      </nav>
-
-      {/* Divider */}
-      <hr style={{ borderColor: "#e8e8e8", margin: "8px 0" }} />
-
-      {/* Bottom Nav */}
-      <div className="d-flex flex-column" style={{ gap: 2 }}>
-        {visibleBottom.map((item) => (
-          <NavItem
-            key={item.key}
-            icon={item.icon}
-            label={item.label}
-            href={item.href}
-            collapsed={!isMobile && collapsed}
-            active={item.key === activeKey}
-            danger={item.danger}
-          />
-        ))}
-      </div>
-    </div>
-  );
+  const sidebarClasses = [
+    "bs-sidebar",
+    collapsed  ? "bs-sidebar--collapsed" : "",
+    mobileOpen ? "bs-sidebar--mobile-open" : "",
+  ].filter(Boolean).join(" ");
 
   return (
     <>
-      {/* ── Google Font ── */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-      />
-
-      {/* ── Desktop Sidebar (md and up) ── */}
-      <div
-        className="d-none d-md-flex flex-column bg-white"
-        style={{
-          width: sidebarWidth,
-          minWidth: sidebarWidth,
-          height: "100vh",
-          borderRight: "1px solid #ebebeb",
-          transition: "width 0.22s cubic-bezier(.4,0,.2,1), min-width 0.22s cubic-bezier(.4,0,.2,1)",
-          overflow: "hidden",
-          position: "sticky",
-          top: 0,
-          flexShrink: 0,
-        }}
-      >
-        {sidebarContent(false)}
-      </div>
-
-      {/* ── Mobile: Hamburger Button (shown on small screens) ── */}
-      <button
-        className="d-md-none btn btn-light position-fixed"
-        style={{
-          top: 16,
-          left: 16,
-          zIndex: 1050,
-          borderRadius: 10,
-          border: "1px solid #e0e0e0",
-          width: 42,
-          height: 42,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#fff",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-        }}
-        onClick={() => setMobileOpen(true)}
-        aria-label="Open sidebar"
-      >
-        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
-
-      {/* ── Mobile: Backdrop ── */}
+      {/* ── Mobile overlay ── */}
       {mobileOpen && (
         <div
-          className="d-md-none position-fixed top-0 start-0 w-100 h-100"
-          style={{ background: "rgba(0,0,0,0.35)", zIndex: 1055 }}
+          className="bs-overlay d-lg-none"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* ── Mobile: Drawer ── */}
-      <div
-        className="d-md-none position-fixed top-0 start-0 h-100 bg-white"
-        style={{
-          width: 260,
-          zIndex: 1060,
-          transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform 0.25s cubic-bezier(.4,0,.2,1)",
-          borderRight: "1px solid #ebebeb",
-          overflowY: "auto",
-        }}
+      {/* ── Mobile hamburger ── */}
+      <button
+        className="bs-mobile-toggle d-lg-none btn"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open sidebar"
       >
-        {sidebarContent(true)}
-      </div>
+        <i className="bi bi-list" />
+      </button>
+
+      {/* ── Sidebar ── */}
+      <aside className={sidebarClasses}>
+
+        {/* Logo row */}
+        <div className="bs-logo-row">
+          <div className="bs-logo">
+            <div className="bs-logo-icon">
+              <i className="bi bi-buildings-fill" />
+            </div>
+            {!collapsed && (
+              <span className="bs-logo-text">
+                Build<strong>Smart</strong>
+              </span>
+            )}
+          </div>
+
+          {/* Desktop collapse toggle */}
+          <button
+            className="bs-collapse-btn d-none d-lg-flex"
+            onClick={() => setCollapsed(c => !c)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand" : "Collapse"}
+          >
+            <i className={`bi ${collapsed ? "bi-chevron-double-right" : "bi-chevron-double-left"}`} />
+          </button>
+
+          {/* Mobile close */}
+          <button
+            className="bs-collapse-btn d-lg-none"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <i className="bi bi-x-lg" />
+          </button>
+        </div>
+
+        {/* Role badge */}
+        {!collapsed && (
+          <div className="bs-role-badge" style={{ "--badge-color": badge.color }}>
+            <i className="bi bi-shield-check-fill me-1" />
+            {badge.label}
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="bs-divider" />
+
+        {/* Nav items */}
+        <nav className="bs-nav">
+          {navItems.map(item => {
+            const isActive = activePath === item.href;
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                className={`bs-nav-item ${isActive ? "bs-nav-item--active" : ""}`}
+                title={collapsed ? item.label : ""}
+              >
+                <span className="bs-nav-icon">
+                  <i className={`bi ${item.icon}`} />
+                </span>
+                {!collapsed && (
+                  <span className="bs-nav-label">{item.label}</span>
+                )}
+                {isActive && <span className="bs-active-pip" />}
+              </a>
+            );
+          })}
+        </nav>
+
+        {/* Spacer */}
+        <div className="bs-spacer" />
+
+        {/* Divider */}
+        <div className="bs-divider" />
+
+        {/* Profile */}
+        <div className="bs-profile">
+          <div className="bs-avatar">
+            {user.avatar
+              ? <img src={user.avatar} alt={user.name} />
+              : <span>{initials}</span>
+            }
+          </div>
+          {!collapsed && (
+            <div className="bs-profile-info">
+              <p className="bs-profile-name">{user.name}</p>
+              <p className="bs-profile-email">{user.email}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Sign out */}
+        <button
+          className="bs-signout-btn"
+          onClick={onSignOut}
+          title={collapsed ? "Sign out" : ""}
+        >
+          <span className="bs-nav-icon">
+            <i className="bi bi-box-arrow-left" />
+          </span>
+          {!collapsed && <span className="bs-nav-label">Sign Out</span>}
+        </button>
+
+      </aside>
+
+      {/* ── Styles ── */}
+      <style>{`
+        /* ═══ CSS Variables ═══════════════════════════════════════════════ */
+        :root {
+          --sb-width:          260px;
+          --sb-width-collapsed: 72px;
+          --sb-bg:             #0f1923;
+          --sb-bg2:            #162030;
+          --sb-accent:         #f5a623;
+          --sb-accent-dim:     rgba(245,166,35,0.12);
+          --sb-text:           #c8d6e5;
+          --sb-text-muted:     #5d7a96;
+          --sb-border:         rgba(255,255,255,0.06);
+          --sb-radius:         14px;
+          --sb-transition:     0.28s cubic-bezier(.4,0,.2,1);
+          --sb-logo-font:      'Syne', sans-serif;
+          --sb-body-font:      'DM Sans', sans-serif;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
+        /* ═══ Overlay ════════════════════════════════════════════════════ */
+        .bs-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.55);
+          backdrop-filter: blur(3px);
+          z-index: 1039;
+        }
+
+        /* ═══ Mobile toggle ══════════════════════════════════════════════ */
+        .bs-mobile-toggle {
+          position: fixed;
+          top: 14px;
+          left: 14px;
+          z-index: 1040;
+          width: 42px;
+          height: 42px;
+          border-radius: 10px;
+          background: var(--sb-bg);
+          color: var(--sb-accent);
+          border: 1px solid var(--sb-border);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.3rem;
+          box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+          transition: all 0.2s;
+        }
+        .bs-mobile-toggle:hover {
+          background: var(--sb-bg2);
+          transform: scale(1.05);
+        }
+
+        /* ═══ Sidebar shell ══════════════════════════════════════════════ */
+        .bs-sidebar {
+          font-family: var(--sb-body-font);
+          position: fixed;
+          top: 0;
+          left: 0;
+          height: 100vh;
+          width: var(--sb-width);
+          background: var(--sb-bg);
+          display: flex;
+          flex-direction: column;
+          padding: 20px 12px 16px;
+          gap: 0;
+          z-index: 1040;
+          transition: width var(--sb-transition), transform var(--sb-transition);
+          overflow: hidden;
+          border-right: 1px solid var(--sb-border);
+          box-shadow: 4px 0 32px rgba(0,0,0,0.35);
+        }
+
+        /* Collapsed */
+        .bs-sidebar--collapsed {
+          width: var(--sb-width-collapsed);
+        }
+
+        /* Mobile: off-canvas */
+        @media (max-width: 991.98px) {
+          .bs-sidebar {
+            transform: translateX(-100%);
+            width: var(--sb-width) !important;
+          }
+          .bs-sidebar--mobile-open {
+            transform: translateX(0);
+          }
+        }
+
+        /* ═══ Logo row ═══════════════════════════════════════════════════ */
+        .bs-logo-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 48px;
+          margin-bottom: 14px;
+          padding: 0 4px;
+        }
+        .bs-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          overflow: hidden;
+          flex: 1;
+        }
+        .bs-logo-icon {
+          flex-shrink: 0;
+          width: 36px;
+          height: 36px;
+          background: linear-gradient(135deg, var(--sb-accent) 0%, #e08b10 100%);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.15rem;
+          color: #0f1923;
+          box-shadow: 0 3px 12px rgba(245,166,35,0.35);
+        }
+        .bs-logo-text {
+          font-family: var(--sb-logo-font);
+          font-size: 1.15rem;
+          color: #fff;
+          white-space: nowrap;
+          letter-spacing: -0.3px;
+        }
+        .bs-logo-text strong {
+          color: var(--sb-accent);
+        }
+
+        /* ═══ Collapse button ════════════════════════════════════════════ */
+        .bs-collapse-btn {
+          flex-shrink: 0;
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
+          background: transparent;
+          border: 1px solid var(--sb-border);
+          color: var(--sb-text-muted);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.75rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          padding: 0;
+        }
+        .bs-collapse-btn:hover {
+          background: var(--sb-bg2);
+          border-color: var(--sb-accent);
+          color: var(--sb-accent);
+        }
+
+        /* ═══ Role badge ═════════════════════════════════════════════════ */
+        .bs-role-badge {
+          display: inline-flex;
+          align-items: center;
+          font-size: 0.7rem;
+          font-weight: 600;
+          letter-spacing: 0.6px;
+          text-transform: uppercase;
+          color: var(--badge-color, var(--sb-accent));
+          background: color-mix(in srgb, var(--badge-color, var(--sb-accent)) 12%, transparent);
+          border: 1px solid color-mix(in srgb, var(--badge-color, var(--sb-accent)) 25%, transparent);
+          border-radius: 20px;
+          padding: 3px 10px;
+          margin: 0 4px 12px;
+          width: fit-content;
+        }
+
+        /* ═══ Divider ════════════════════════════════════════════════════ */
+        .bs-divider {
+          height: 1px;
+          background: var(--sb-border);
+          margin: 4px 4px 10px;
+          flex-shrink: 0;
+        }
+
+        /* ═══ Nav ════════════════════════════════════════════════════════ */
+        .bs-nav {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          overflow-y: auto;
+          overflow-x: hidden;
+          scrollbar-width: none;
+          flex: 0 0 auto;
+        }
+        .bs-nav::-webkit-scrollbar { display: none; }
+
+        .bs-nav-item {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 12px;
+          border-radius: 10px;
+          color: var(--sb-text);
+          text-decoration: none;
+          transition: all 0.18s;
+          white-space: nowrap;
+          overflow: hidden;
+          min-height: 44px;
+        }
+        .bs-nav-item:hover {
+          background: var(--sb-bg2);
+          color: #fff;
+          text-decoration: none;
+        }
+        .bs-nav-item--active {
+          background: var(--sb-accent-dim);
+          color: var(--sb-accent);
+          font-weight: 600;
+        }
+        .bs-nav-item--active:hover {
+          background: rgba(245,166,35,0.18);
+          color: var(--sb-accent);
+        }
+
+        .bs-nav-icon {
+          flex-shrink: 0;
+          width: 20px;
+          text-align: center;
+          font-size: 1.05rem;
+          line-height: 1;
+        }
+        .bs-nav-label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: opacity var(--sb-transition);
+        }
+        .bs-active-pip {
+          position: absolute;
+          right: 10px;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--sb-accent);
+          box-shadow: 0 0 8px var(--sb-accent);
+        }
+
+        /* Collapsed icon centering */
+        .bs-sidebar--collapsed .bs-nav-item {
+          justify-content: center;
+          padding: 10px;
+          gap: 0;
+        }
+        .bs-sidebar--collapsed .bs-nav-item:hover::after {
+          content: attr(title);
+          position: absolute;
+          left: calc(var(--sb-width-collapsed) + 8px);
+          background: #1e2d3d;
+          color: #fff;
+          font-size: 0.8rem;
+          padding: 5px 10px;
+          border-radius: 7px;
+          white-space: nowrap;
+          pointer-events: none;
+          z-index: 9999;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+          border: 1px solid var(--sb-border);
+        }
+        .bs-sidebar--collapsed .bs-active-pip {
+          right: 6px;
+          top: 6px;
+          width: 5px;
+          height: 5px;
+        }
+
+        /* ═══ Spacer ═════════════════════════════════════════════════════ */
+        .bs-spacer { flex: 1; }
+
+        /* ═══ Profile ════════════════════════════════════════════════════ */
+        .bs-profile {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 8px;
+          border-radius: 10px;
+          background: var(--sb-bg2);
+          margin-bottom: 6px;
+          overflow: hidden;
+          transition: all 0.2s;
+          min-height: 56px;
+        }
+        .bs-profile:hover {
+          background: #1d2e40;
+        }
+        .bs-sidebar--collapsed .bs-profile {
+          justify-content: center;
+          padding: 10px;
+        }
+
+        .bs-avatar {
+          flex-shrink: 0;
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          background: linear-gradient(135deg, #2980b9, #1abc9c);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: 0.5px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .bs-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .bs-profile-info {
+          overflow: hidden;
+          flex: 1;
+        }
+        .bs-profile-name {
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #fff;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .bs-profile-email {
+          font-size: 0.7rem;
+          color: var(--sb-text-muted);
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        /* ═══ Sign out ═══════════════════════════════════════════════════ */
+        .bs-signout-btn {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 12px;
+          border-radius: 10px;
+          background: transparent;
+          border: 1px solid rgba(231,76,60,0.2);
+          color: #e74c3c;
+          cursor: pointer;
+          font-family: var(--sb-body-font);
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: all 0.18s;
+          width: 100%;
+          text-align: left;
+          white-space: nowrap;
+          overflow: hidden;
+          min-height: 44px;
+        }
+        .bs-signout-btn:hover {
+          background: rgba(231,76,60,0.12);
+          border-color: rgba(231,76,60,0.5);
+          color: #ff6b6b;
+        }
+        .bs-sidebar--collapsed .bs-signout-btn {
+          justify-content: center;
+          padding: 10px;
+          gap: 0;
+        }
+
+        /* ═══ Content offset helper ══════════════════════════════════════ */
+        .bs-main-content {
+          margin-left: var(--sb-width);
+          transition: margin-left var(--sb-transition);
+        }
+        .bs-sidebar--collapsed ~ .bs-main-content {
+          margin-left: var(--sb-width-collapsed);
+        }
+        @media (max-width: 991.98px) {
+          .bs-main-content {
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </>
   );
-};
-
-// ─── Demo App: shows Sidebar + content side-by-side ──────────────────────────
-// This is the usage example. In your real app, wrap your routes/pages with
-// this layout pattern and pass the `role` + `activeKey` from your auth context.
-
-const ROLES = ["admin", "project_manager", "finance", "vendor", "site", "safety"];
-
-export default function App() {
-  const [demoRole, setDemoRole] = useState("admin");
-  const [demoActive, setDemoActive] = useState("dashboard");
-
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#fafafa" }}>
-      {/* Sidebar receives role and activeKey as props */}
-      <Sidebar role={demoRole} activeKey={demoActive} />
-
-      {/* Main content — adjusts automatically when sidebar opens/closes */}
-      <main style={{ flex: 1, padding: "32px 28px", minWidth: 0 }}>
-
-        {/* Demo controls */}
-        <div className="mb-4">
-          <h5 style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 700, marginBottom: 16 }}>
-            🎛 Demo Controls
-          </h5>
-          <div className="mb-3">
-            <label className="form-label fw-semibold" style={{ fontSize: 13, color: "#555" }}>
-              Switch Role
-            </label>
-            <div className="d-flex flex-wrap gap-2">
-              {ROLES.map((r) => (
-                <button
-                  key={r}
-                  className={`btn btn-sm ${demoRole === r ? "btn-dark" : "btn-outline-secondary"}`}
-                  style={{ borderRadius: 20, fontSize: 12, textTransform: "capitalize" }}
-                  onClick={() => setDemoRole(r)}
-                >
-                  {r.replace("_", " ")}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: "#fff",
-            border: "1px solid #ebebeb",
-            borderRadius: 16,
-            padding: "28px 24px",
-            fontFamily: "'DM Sans', sans-serif",
-          }}
-        >
-          <h4 style={{ fontWeight: 700 }}>Main Content Area</h4>
-          <p style={{ color: "#888", marginBottom: 8 }}>
-            Current role: <strong style={{ color: "#000" }}>{demoRole.replace("_", " ")}</strong>
-          </p>
-          <p style={{ color: "#888", fontSize: 14 }}>
-            The sidebar automatically shows only the nav items permitted for this role.
-            On mobile, the sidebar is hidden behind a hamburger menu and slides in as a drawer
-            without overlapping this content area.
-          </p>
-        </div>
-
-        <div className="mt-3 p-3 rounded-3" style={{ background: "#f6f6f6", fontSize: 13, color: "#666", fontFamily: "monospace" }}>
-          {`<Sidebar role="${demoRole}" activeKey="${demoActive}" />`}
-        </div>
-      </main>
-    </div>
-  );
 }
-
-// ─── Export Sidebar standalone for use in your own layout ────────────────────
-export { Sidebar, NAV_ITEMS, BOTTOM_ITEMS };

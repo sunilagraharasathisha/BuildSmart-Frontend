@@ -1,3 +1,7 @@
-﻿// VendorDashboard — to be implemented
-const VendorDashboard = () => null;
+﻿const VendorDashboard = () => (
+  <div className="container mt-5">
+    <h2>Vendor Dashboard</h2>
+    <p className="text-muted">Welcome Vendor</p>
+  </div>
+);
 export default VendorDashboard;

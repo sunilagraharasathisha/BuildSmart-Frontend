@@ -1,232 +1,338 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { registerUser } from '../../api/authApi';
+// src/pages/auth/RegisterPage.jsx
 
+import { useState }          from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { registerUser }      from "../../api/authApi";
+
+// ── Role options matching your Spring Boot enum ───────────────────────────────
+const ROLES = [
+  { value: "",                label: "Select your role"  },
+  { value: "ADMIN",           label: "Admin"             },
+  { value: "PROJECT_MANAGER", label: "Project Manager"   },
+  { value: "FINANCE",         label: "Finance"           },
+  { value: "VENDOR",          label: "Vendor"            },
+  { value: "SITE",            label: "Site Engineer"     },
+  { value: "SAFETY",          label: "Safety Officer"    },
+];
+
+// ── Validation ────────────────────────────────────────────────────────────────
+const validate = (fields) => {
+  const errors = {};
+
+  if (!fields.name.trim()) {
+    errors.name = "Name is required";
+  } else if (!/^[a-zA-Z\s]{2,}$/.test(fields.name.trim())) {
+    errors.name = "Letters only, minimum 2 characters";
+  }
+
+  if (!fields.email) {
+    errors.email = "Email is required";
+  } else if (!/^[^\s@]+@gmail\.com$/.test(fields.email)) {
+    errors.email = "Only @gmail.com email addresses are accepted";
+  }
+
+  if (!fields.phone) {
+    errors.phone = "Phone number is required";
+  } else if (!/^\d{10}$/.test(fields.phone)) {
+    errors.phone = "Phone must be exactly 10 digits";
+  }
+
+  if (!fields.password) {
+    errors.password = "Password is required";
+  } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(fields.password)) {
+    errors.password = "Min 6 chars with uppercase, lowercase and number";
+  }
+
+  if (!fields.role) {
+    errors.role = "Please select your role";
+  }
+
+  return errors;
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 const RegisterPage = () => {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    role: '',
-  });
+  const [fields, setFields]             = useState({ name: "", email: "", phone: "", password: "", role: "" });
+  const [errors, setErrors]             = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading]           = useState(false);
+  const [apiError, setApiError]         = useState("");
 
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState('');
-  const [loading, setLoading] = useState(false);
-
+  // ── Handle input change ───────────────────────────────────────────────────
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    setErrors(prev => ({ ...prev, [name]: '' }));
+
+    // Phone → block non-digits while typing
+    if (name === "phone" && value && !/^\d*$/.test(value)) return;
+
+    setFields((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+    setApiError("");
   };
 
-  const validate = () => {
-    const newErrors = {};
-
-    if (!form.name.trim()) {
-      newErrors.name = 'Full name is required.';
-    } else if (form.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters.';
-    }
-
-    if (!form.email.trim()) {
-      newErrors.email = 'Email is required.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = 'Enter a valid email address.';
-    }
-
-    if (!form.phone.trim()) {
-      newErrors.phone = 'Phone number is required.';
-    } else if (!/^\d{10}$/.test(form.phone)) {
-      newErrors.phone = 'Enter a valid 10-digit phone number.';
-    }
-
-    if (!form.role) {
-      newErrors.role = 'Please select a role.';
-    }
-
-    if (!form.password) {
-      newErrors.password = 'Password is required.';
-    } else if (form.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters.';
-    } else if (!/[A-Z]/.test(form.password)) {
-      newErrors.password = 'Password must contain at least one uppercase letter.';
-    } else if (!/[0-9]/.test(form.password)) {
-      newErrors.password = 'Password must contain at least one number.';
-    }
-
-    if (!form.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password.';
-    } else if (form.password !== form.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match.';
-    }
-
-    return newErrors;
-  };
-
+  // ── Handle submit ─────────────────────────────────────────────────────────
+  // EXECUTION FLOW:
+  // 1. validate all fields → stop if errors
+  // 2. call registerUser({ name, email, phone, password, role }) → hits Spring Boot
+  // 3. Spring Boot saves user to DB → returns success
+  // 4. navigate("/login") → go to login page
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setServerError('');
 
-    const validationErrors = validate();
+    const validationErrors = validate(fields);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
     setLoading(true);
+    setApiError("");
+
     try {
+      // Step 2 — calls authApi.js → axiosInstance → Spring Boot
       await registerUser({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
-        role: form.role,
+        name    : fields.name.trim(),
+        email   : fields.email,
+        phone   : fields.phone,
+        password: fields.password,
+        role    : fields.role,
       });
-      navigate('/auth/login');
-    } catch (err) {
-      setServerError(err.response?.data?.message || 'Registration failed. Try again.');
+
+      // Step 4 — success → go to login
+      navigate("/login");
+
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.response?.data ||
+        "Registration failed. Please try again.";
+      setApiError(message);
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div
-      className="min-vh-100 d-flex align-items-center justify-content-center py-5"
-      style={{ backgroundColor: '#f5f5f5' }}
-    >
-      <div className="card border-0 shadow" style={{ width: '100%', maxWidth: '460px' }}>
+    <div className="container-fluid min-vh-100 p-0">
+      <div className="row g-0 min-vh-100">
 
-        {/* Header */}
-        <div className="card-header text-center py-4 border-0" style={{ backgroundColor: '#1a1a2e' }}>
-          <i className="bi bi-building-fill fs-3" style={{ color: '#f7a21e' }}></i>
-          <h4 className="text-white mb-0 mt-1">
-            <span style={{ color: '#f7a21e' }}>Build</span>Smart
-          </h4>
-          <p className="text-white-50 small mb-0">Create your account</p>
-        </div>
-
-        {/* Body */}
-        <div className="card-body p-4">
-
-          {serverError && (
-            <div className="alert alert-danger py-2 small">{serverError}</div>
-          )}
-
-          <form onSubmit={handleSubmit} noValidate>
-
-            {/* Name */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Full Name</label>
-              <input
-                type="text"
-                name="name"
-                className={`form-control ${errors.name ? 'is-invalid' : ''}`}
-                placeholder="John Doe"
-                value={form.name}
-                onChange={handleChange}
-              />
-              {errors.name && <div className="invalid-feedback">{errors.name}</div>}
-            </div>
-
-            {/* Email */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Email</label>
-              <input
-                type="email"
-                name="email"
-                className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={handleChange}
-              />
-              {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-            </div>
-
-            {/* Phone */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
-                placeholder="10-digit mobile number"
-                value={form.phone}
-                onChange={handleChange}
-              />
-              {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
-            </div>
-
-            {/* Role */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Register As</label>
-              <select
-                name="role"
-                className={`form-select ${errors.role ? 'is-invalid' : ''}`}
-                value={form.role}
-                onChange={handleChange}
-              >
-                <option value="">-- Select your role --</option>
-                <option value="PROJECT_MANAGER">Project Manager</option>
-                <option value="SITE_ENGINEER">Site Engineer</option>
-                <option value="SAFETY_OFFICER">Safety Officer</option>
-                <option value="VENDOR">Vendor</option>
-                <option value="FINANCE_OFFICER">Finance Officer</option>
-              </select>
-              {errors.role && <div className="invalid-feedback">{errors.role}</div>}
-            </div>
-
-            {/* Password */}
-            <div className="mb-3">
-              <label className="form-label fw-medium">Password</label>
-              <input
-                type="password"
-                name="password"
-                className={`form-control ${errors.password ? 'is-invalid' : ''}`}
-                placeholder="Min 8 chars, 1 uppercase, 1 number"
-                value={form.password}
-                onChange={handleChange}
-              />
-              {errors.password && <div className="invalid-feedback">{errors.password}</div>}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="mb-4">
-              <label className="form-label fw-medium">Confirm Password</label>
-              <input
-                type="password"
-                name="confirmPassword"
-                className={`form-control ${errors.confirmPassword ? 'is-invalid' : ''}`}
-                placeholder="Repeat your password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-              />
-              {errors.confirmPassword && <div className="invalid-feedback">{errors.confirmPassword}</div>}
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-warning w-100 fw-bold"
-              disabled={loading}
+        {/* ── LEFT SIDE — visible only on md and above ── */}
+        <div
+          className="col-md-6 d-none d-md-flex flex-column justify-content-between p-5 text-white"
+          style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)" }}
+        >
+          {/* Logo */}
+          <div className="d-flex align-items-center gap-2">
+            <div
+              className="rounded-3 d-flex align-items-center justify-content-center"
+              style={{ width: 44, height: 44, background: "#fff" }}
             >
-              {loading ? (
-                <><span className="spinner-border spinner-border-sm me-2" />Creating account...</>
-              ) : 'Create Account'}
-            </button>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <span className="fw-bold fs-5">BuildSmart</span>
+          </div>
 
-          </form>
+          {/* Center text */}
+          <div>
+            <span
+              className="badge rounded-pill mb-3 px-3 py-2"
+              style={{ background: "rgba(255,255,255,0.1)", fontSize: 11, letterSpacing: 2 }}
+            >
+              JOIN THE PLATFORM
+            </span>
+            <h1 className="display-5 fw-bold lh-sm mb-3">
+              One platform,<br />
+              <span style={{ color: "#facc15" }}>six roles</span>,<br />
+              zero confusion
+            </h1>
+            <p className="text-white-50 fs-6 lh-lg mb-4">
+              Register and get access to tools built specifically for your role —
+              whether you manage projects, handle finances, or oversee site safety.
+            </p>
 
-          <p className="text-center mt-3 mb-0 small text-muted">
-            Already have an account?{' '}
-            <Link to="/auth/login" className="text-warning fw-medium">Login here</Link>
+            {/* Role chips */}
+            <div className="d-flex flex-wrap gap-2">
+              {["Admin", "Project Manager", "Finance", "Vendor", "Site", "Safety"].map((r) => (
+                <span
+                  key={r}
+                  className="badge rounded-pill px-3 py-2"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", fontSize: 12 }}
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom note */}
+          <p className="text-white-50 small mb-0">
+            Already have an account?{" "}
+            <Link to="/login" className="text-warning text-decoration-none fw-semibold">
+              Sign in here →
+            </Link>
           </p>
-
         </div>
+
+        {/* ── RIGHT SIDE — Register Form ── */}
+        <div className="col-12 col-md-6 d-flex align-items-center justify-content-center bg-white p-4 p-md-5">
+          <div className="w-100" style={{ maxWidth: 440 }}>
+
+            <h2 className="fw-bold mb-1">Create your account</h2>
+            <p className="text-muted mb-4">Fill in your details to get started</p>
+
+            {/* API Error */}
+            {apiError && (
+              <div className="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <small>{apiError}</small>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} noValidate>
+
+              {/* Full Name */}
+              <div className="mb-3">
+                <label htmlFor="name" className="form-label fw-semibold">Full Name</label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Rashmi Sharma"
+                  value={fields.name}
+                  onChange={handleChange}
+                  className={`form-control ${errors.name ? "is-invalid" : ""}`}
+                />
+                {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+              </div>
+
+              {/* Email */}
+              <div className="mb-3">
+                <label htmlFor="email" className="form-label fw-semibold">Email Address</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="rashmi@gmail.com"
+                  value={fields.email}
+                  onChange={handleChange}
+                  className={`form-control ${errors.email ? "is-invalid" : ""}`}
+                />
+                {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+              </div>
+
+              {/* Phone */}
+              <div className="mb-3">
+                <label htmlFor="phone" className="form-label fw-semibold">Phone Number</label>
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="9876543210"
+                  value={fields.phone}
+                  onChange={handleChange}
+                  maxLength={10}
+                  className={`form-control ${errors.phone ? "is-invalid" : ""}`}
+                />
+                {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
+              </div>
+
+              {/* Password */}
+              <div className="mb-3">
+                <label htmlFor="password" className="form-label fw-semibold">Password</label>
+                <div className="input-group">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={fields.password}
+                    onChange={handleChange}
+                    className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                        <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                  {errors.password && (
+                    <div className="invalid-feedback">{errors.password}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Role */}
+              <div className="mb-4">
+                <label htmlFor="role" className="form-label fw-semibold">Role</label>
+                <select
+                  id="role"
+                  name="role"
+                  value={fields.role}
+                  onChange={handleChange}
+                  className={`form-select ${errors.role ? "is-invalid" : ""}`}
+                >
+                  {ROLES.map((r) => (
+                    <option key={r.value} value={r.value} disabled={r.value === ""}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.role && <div className="invalid-feedback">{errors.role}</div>}
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                className="btn btn-dark w-100 py-2 fw-semibold"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create Account"
+                )}
+              </button>
+
+            </form>
+
+            {/* Switch to login */}
+            <p className="text-center text-muted mt-4 mb-0 small">
+              Already have an account?{" "}
+              <Link to="/login" className="fw-bold text-decoration-none">
+                Sign in
+              </Link>
+            </p>
+
+          </div>
+        </div>
+
       </div>
     </div>
   );

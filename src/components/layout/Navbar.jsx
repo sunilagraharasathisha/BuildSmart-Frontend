@@ -46,13 +46,12 @@ export default function Navbar() {
           </div>
 
           {/* Login Button */}
-    <a href="#"
-  className="btn login-btn bg-warning rounded-3 d-none d-lg-block"
-  data-bs-toggle="modal"
-  data-bs-target="#loginModal"
+<Link
+  to="/login"
+  className="btn bg-warning rounded-3 d-none d-lg-block"
 >
   Login
-</a>
+</Link>
 
         </div>
       </nav>
