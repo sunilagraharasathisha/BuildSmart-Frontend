@@ -1,65 +1,61 @@
-import { Link, NavLink } from 'react-router-dom';
+import { useState } from "react";
+import { Link } from 'react-router-dom';
 
-const Navbar = () => {
+const navLinks = [
+  { label: "Home",       href: "/" },
+  { label: "Services",   href: "#services" },
+  { label: "About us",   href: "#about" },
+  { label: "Contact us", href: "/contact", isRoute: true },
+];
+
+export default function Navbar() {
+  const [active, setActive] = useState("Home");
+
   return (
-    <nav className="navbar navbar-expand-lg sticky-top shadow-sm" style={{ backgroundColor: '#1a1a2e' }}>
-      <div className="container">
-        {/* Brand */}
-        <Link className="navbar-brand d-flex align-items-center gap-2" to="/">
-          <i className="bi bi-building-fill fs-4" style={{ color: '#f7a21e' }}></i>
-          <span className="fw-bold fs-4" style={{ color: '#f7a21e' }}>Build</span>
-          <span className="fw-bold fs-4 text-white">Smart</span>
-        </Link>
+    <>
+      <nav className="navbar navbar-expand-lg bg-white px-4 py-4">
+        <div className="container-fluid">
 
-        {/* Toggler */}
-        <button
-          className="navbar-toggler border-0"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#mainNav"
-          aria-controls="mainNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <i className="bi bi-list fs-3 text-white"></i>
-        </button>
+        {/* Logo */}
+        <a className="navbar-brand fw-bold bg-light rounded px-3 py-1" href="#">BuildSmart</a>
 
-        {/* Links */}
-        <div className="collapse navbar-collapse" id="mainNav">
-          <ul className="navbar-nav mx-auto gap-lg-2">
-            {[
-              { path: '/', label: 'Home' },
-              { path: '/about', label: 'About' },
-              { path: '/services', label: 'Services' },
-              { path: '/contact', label: 'Contact' },
-            ].map(({ path, label }) => (
-              <li className="nav-item" key={path}>
-                <NavLink
-                  to={path}
-                  end
-                  className={({ isActive }) =>
-                    `nav-link fw-medium px-3 py-2 rounded ${isActive ? 'text-warning' : 'text-white'}`
-                  }
+          {/* Hamburger */}
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#mainNav"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+
+          {/* Nav Links */}
+          <div className="collapse navbar-collapse justify-content-center" id="mainNav">
+            <div className="d-flex flex-column flex-lg-row bg-light rounded px-4 py-2 gap-4 gap-lg-5 w-auto">
+              {navLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className={`nav-link text-black ${active === link.label ? "fw-bold" : "fw-normal"}`}
+                  onClick={() => setActive(link.label)}
                 >
-                  {label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-
-          {/* Auth buttons */}
-          <div className="d-flex gap-2 mt-3 mt-lg-0">
-            <Link to="/auth/login" className="btn btn-outline-warning btn-sm px-3">
-              Login
-            </Link>
-            <Link to="/auth/register" className="btn btn-warning btn-sm px-3 fw-semibold text-dark">
-              Register
-            </Link>
+                  {link.label}
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
 
-export default Navbar;
+          {/* Login Button */}
+    <a href="#"
+  className="btn login-btn bg-warning rounded-3 d-none d-lg-block"
+  data-bs-toggle="modal"
+  data-bs-target="#loginModal"
+>
+  Login
+</a>
+
+        </div>
+      </nav>
+    </>
+  );
+}

@@ -1,41 +1,43 @@
+import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 
-// Landing pages
+// ... your existing page imports stay the same
 import HomePage from '../pages/landing/HomePage';
-import AboutPage from '../pages/landing/AboutPage';
-import ServicePage from '../pages/landing/ServicePage';
 import ContactPage from '../pages/landing/ContactPage';
-
-// Auth pages (stubs — to be implemented)
 import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 
-const LandingLayout = ({ children }) => (
+
+const LandingLayout = ({ children, onJoinClick }) => (  // 👈 accept prop
   <>
-    <Navbar />
+    <Navbar onJoinClick={onJoinClick} />   {/* 👈 pass down */}
     <main>{children}</main>
     <Footer />
   </>
 );
 
-const AppRoutes = () => (
-  <Routes>
-    {/* ── Landing ── */}
-    <Route path="/" element={<LandingLayout><HomePage /></LandingLayout>} />
-    <Route path="/about" element={<LandingLayout><AboutPage /></LandingLayout>} />
-    <Route path="/services" element={<LandingLayout><ServicePage /></LandingLayout>} />
-    <Route path="/contact" element={<LandingLayout><ContactPage /></LandingLayout>} />
+const AppRoutes = () => {
+  const [showLogin, setShowLogin] = useState(false);  // 👈 state lives here
 
-    {/* ── Auth (stubs) ── */}
-    <Route path="/auth/login" element={<LoginPage />} />
-    <Route path="/auth/register" element={<RegisterPage />} />
-    <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
-    <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-  </Routes>
-);
+  return (
+    <>
+      <Routes>
+        {/* ── Landing ── */}
+        <Route path="/" element={<LandingLayout onJoinClick={() => setShowLogin(true)}><HomePage /></LandingLayout>} />
+        <Route path="/contact" element={<LandingLayout onJoinClick={() => setShowLogin(true)}><ContactPage /></LandingLayout>} />
+
+        {/* ── Auth ── */}
+        <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/register" element={<RegisterPage />} />
+        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+      </Routes>
+    </>
+  );
+};
 
 export default AppRoutes;

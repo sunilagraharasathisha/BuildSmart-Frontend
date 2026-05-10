@@ -1,7 +1,13 @@
 import axiosInstance from './axiosInstance';
 
-export const login = (data) => axiosInstance.post('/auth/login', data);
-export const register = (data) => axiosInstance.post('/auth/register', data);
-export const forgotPassword = (data) => axiosInstance.post('/auth/forgot-password', data);
-export const resetPassword = (data) => axiosInstance.post('/auth/reset-password', data);
-export const logout = () => axiosInstance.post('/auth/logout');
+export const loginUser = (data) => {
+  return axiosInstance.post("/api/auth/login", data);
+};
+
+export const registerUser = (formData) => {
+  return axiosInstance.post("/api/auth/signup", formData);
+};
+
+export const logoutUser = () => {
+  return axiosInstance.post("/api/auth/logout");
+};
