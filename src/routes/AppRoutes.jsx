@@ -49,8 +49,8 @@ const AppRoutes = () => {
       <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
 
       {/* ── Auth pages — NO Navbar NO Footer ──────────────────────────────── */}
-      <Route path="/login"    element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/auth/login"    element={<LoginPage />} />
+      <Route path="/auth/register" element={<RegisterPage />} />
 
       {/* ── Role based dashboards ─────────────────────────────────────────── */}
       {/* Each route checks: 1. is logged in 2. is correct role               */}

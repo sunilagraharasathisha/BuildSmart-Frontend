@@ -100,6 +100,17 @@ const LoginPage = () => {
       // Extract message from backend response
       const data = error.response?.data;
 
+      console.log("Login error:", error.response?.status, data);
+
+      const messageStr = typeof data?.message === "string" ? data.message.toLowerCase() : "";
+      const responseStr = typeof data === "string" ? data.toLowerCase() : "";
+
+      if (messageStr.includes("pending") || messageStr.includes("verified") || responseStr.includes("pending") || responseStr.includes("verified")) {
+        setApiError("Access denied. Your account is still not verified.");
+        setLoading(false);
+        return;
+      }
+
       let message = "Invalid email or password. Please try again.";
 
       if (data) {
@@ -293,7 +304,7 @@ const LoginPage = () => {
             {/* Switch to register */}
             <p className="text-center text-muted mt-4 mb-0 small">
               Don't have an account?{" "}
-              <Link to="/register" className="fw-bold text-decoration-none">
+              <Link to="/auth/register" className="fw-bold text-decoration-none">
                 Create one
               </Link>
             </p>

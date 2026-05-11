@@ -7,12 +7,11 @@ import { registerUser }      from "../../api/authApi";
 // ── Role options matching your Spring Boot enum ───────────────────────────────
 const ROLES = [
   { value: "",                label: "Select your role"  },
-  { value: "ADMIN",           label: "Admin"             },
   { value: "PROJECT_MANAGER", label: "Project Manager"   },
-  { value: "FINANCE",         label: "Finance"           },
+  { value: "FINANCE_OFFICER",         label: "Finance"           },
   { value: "VENDOR",          label: "Vendor"            },
-  { value: "SITE",            label: "Site Engineer"     },
-  { value: "SAFETY",          label: "Safety Officer"    },
+  { value: "SITE_ENGINEER",            label: "Site Engineer"     },
+  { value: "SAFETY_OFFICER",          label: "Safety Officer"    },
 ];
 
 // ── Validation ────────────────────────────────────────────────────────────────
@@ -174,7 +173,7 @@ const RegisterPage = () => {
           {/* Bottom note */}
           <p className="text-white-50 small mb-0">
             Already have an account?{" "}
-            <Link to="/login" className="text-warning text-decoration-none fw-semibold">
+            <Link to="/auth/login" className="text-warning text-decoration-none fw-semibold">
               Sign in here →
             </Link>
           </p>
@@ -325,7 +324,7 @@ const RegisterPage = () => {
             {/* Switch to login */}
             <p className="text-center text-muted mt-4 mb-0 small">
               Already have an account?{" "}
-              <Link to="/login" className="fw-bold text-decoration-none">
+              <Link to="/auth/login" className="fw-bold text-decoration-none">
                 Sign in
               </Link>
             </p>
